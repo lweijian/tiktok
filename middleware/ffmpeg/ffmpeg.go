@@ -3,6 +3,7 @@ package ffmpeg
 import (
 	"TikTok/config"
 	"fmt"
+	"github.com/axgle/mahonia"
 	"golang.org/x/crypto/ssh"
 	"log"
 	"time"
@@ -50,7 +51,7 @@ func InitSSH() {
 	go keepAlive()
 }
 
-//通过增加携程，将获取的信息进行派遣，当信息处理失败之后，还会将处理方式放入通道形成的队列中
+// 通过增加携程，将获取的信息进行派遣，当信息处理失败之后，还会将处理方式放入通道形成的队列中
 func dispatcher() {
 	for ffmsg := range Ffchan {
 		go func(f Ffmsg) {
@@ -71,18 +72,19 @@ func Ffmpeg(videoName string, imageName string) error {
 		log.Fatal("创建ssh session 失败", err)
 	}
 	defer session.Close()
-	//执行远程命令 ffmpeg -ss 00:00:01 -i /home/ftpuser/video/1.mp4 -vframes 1 /home/ftpuser/images/4.jpg
-	combo, err := session.CombinedOutput("ls;/usr/local/ffmpeg/bin/ffmpeg -ss 00:00:01 -i /home/ftpuser/video/" + videoName + ".mp4 -vframes 1 /home/ftpuser/images/" + imageName + ".jpg")
+	enc := mahonia.NewEncoder("gbk")
+	cmd := "ffmpeg -ss 00:00:01 -i E:\\ShortVideoRecommendation\\tiktok\\videos\\" + videoName + ".mp4 -vframes 1 E:\\ShortVideoRecommendation\\tiktok\\images\\" + imageName + ".jpg"
+	log.Println(cmd)
+	combo, err := session.CombinedOutput(cmd)
 	if err != nil {
-		//log.Fatal("远程执行cmd 失败", err)
-		log.Fatal("命令输出:", string(combo))
+		log.Fatal("命令输出失败:", enc.ConvertString(string(combo)))
 		return err
 	}
-	//fmt.Println("命令输出:", string(combo))
+	fmt.Println("命令输出:", enc.ConvertString(string(combo)))
 	return nil
 }
 
-//维持长链接
+// 维持长链接
 func keepAlive() {
 	time.Sleep(time.Duration(config.SSHHeartbeatTime) * time.Second)
 	session, _ := ClientSSH.NewSession()

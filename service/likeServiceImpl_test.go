@@ -3,6 +3,7 @@ package service
 import (
 	"TikTok/dao"
 	"TikTok/middleware/ffmpeg"
+	"TikTok/middleware/ftp"
 	"TikTok/middleware/rabbitmq"
 	"TikTok/middleware/redis"
 	"fmt"
@@ -13,7 +14,7 @@ func TestIsFavourite(t *testing.T) {
 	// 初始化数据库
 	dao.Init()
 	// 初始化FTP服务器链接
-	dao.InitFTP()
+	ftp.InitFTP()
 	// 初始化SSH
 	ffmpeg.InitSSH()
 
@@ -33,7 +34,7 @@ func TestFavouriteCount(t *testing.T) {
 	// 初始化数据库
 	dao.Init()
 	// 初始化FTP服务器链接
-	dao.InitFTP()
+	ftp.InitFTP()
 	// 初始化SSH
 	ffmpeg.InitSSH()
 
@@ -53,7 +54,7 @@ func TestTotalFavourite(t *testing.T) {
 	// 初始化数据库
 	dao.Init()
 	// 初始化FTP服务器链接
-	dao.InitFTP()
+	ftp.InitFTP()
 	// 初始化SSH
 	ffmpeg.InitSSH()
 

@@ -7,20 +7,19 @@ import (
 	"TikTok/middleware/rabbitmq"
 	"TikTok/middleware/redis"
 	"TikTok/util"
-	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
 
-//如果启动有问题，大概是你的IP地址出现变化，需要在项目依赖的服务器中配置安全组
+// 如果启动有问题，大概是你的IP地址出现变化，需要在项目依赖的服务器中配置安全组
 func main() {
 	//关闭log
 	//log.SetOutput(ioutil.Discard)
 	initDeps()
-	//gin
+	////gin
 	r := gin.Default()
 	initRouter(r)
-	//pprof
-	pprof.Register(r)
+	////pprof
+	//pprof.Register(r)
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
@@ -37,12 +36,12 @@ func initDeps() {
 	redis.InitRedis()
 	// 初始化rabbitMQ。
 	rabbitmq.InitRabbitMQ()
-	// 初始化Follow的相关消息队列，并开启消费。
+	//// 初始化Follow的相关消息队列，并开启消费。
 	rabbitmq.InitFollowRabbitMQ()
-	// 初始化Like的相关消息队列，并开启消费。
+	//// 初始化Like的相关消息队列，并开启消费。
 	rabbitmq.InitLikeRabbitMQ()
-	//初始化Comment的消息队列，并开启消费
+	////初始化Comment的消息队列，并开启消费
 	rabbitmq.InitCommentRabbitMQ()
-	//初始化敏感词拦截器。
+	////初始化敏感词拦截器。
 	util.InitFilter()
 }

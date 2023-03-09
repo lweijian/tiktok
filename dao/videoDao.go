@@ -18,6 +18,7 @@ type TableVideo struct {
 }
 
 // TableName
+//
 //	将TableVideo映射到videos，
 //	这样我结构体到名字就不需要是Video了，防止和我Service层到结构体名字冲突
 func (TableVideo) TableName() string {
@@ -68,11 +69,11 @@ func GetVideosByLastTime(lastTime time.Time) ([]TableVideo, error) {
 // 通过ftp将视频传入服务器
 func VideoFTP(file io.Reader, videoName string) error {
 	//转到video相对路线下
-	err := ftp.MyFTP.Cwd("video")
+	err := ftp.MyFTP.Cwd("videos")
 	if err != nil {
-		log.Println("转到路径video失败！！！")
+		log.Println("转到路径videos失败！！！")
 	} else {
-		log.Println("转到路径video成功！！！")
+		log.Println("转到路径videos成功！！！")
 	}
 	err = ftp.MyFTP.Stor(videoName+".mp4", file)
 	if err != nil {

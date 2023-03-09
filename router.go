@@ -7,10 +7,10 @@ import (
 )
 
 func initRouter(r *gin.Engine) {
-	apiRouter := r.Group("/douyin")
+	apiRouter := r.Group("/tiktok")
 	// basic apis
 	apiRouter.GET("/feed/", jwt.AuthWithoutLogin(), controller.Feed)
-	apiRouter.POST("/publish/action/", jwt.AuthBody(), controller.Publish)
+	apiRouter.POST("/publish/action/", controller.Publish)
 	apiRouter.GET("/publish/list/", jwt.Auth(), controller.PublishList)
 	apiRouter.GET("/user/", jwt.Auth(), controller.UserInfo)
 	apiRouter.POST("/user/register/", controller.Register)

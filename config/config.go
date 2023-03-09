@@ -16,19 +16,19 @@ var ExpireTime = time.Hour * 48 // 设置Redis数据热度消散时间。
 const VideoCount = 5
 
 // ConConfig ftp服务器地址
-const ConConfig = "43.138.25.60:21"
-const FtpUser = "ftpuser"
-const FtpPsw = "424193726"
+const ConConfig = "localhost:21"
+const FtpUser = "root"
+const FtpPsw = "123456"
 const HeartbeatTime = 2 * 60
 
 // PlayUrlPrefix 存储的图片和视频的链接
-const PlayUrlPrefix = "http://43.138.25.60/"
-const CoverUrlPrefix = "http://43.138.25.60/images/"
+const PlayUrlPrefix = "http://127.0.0.1/videos/"
+const CoverUrlPrefix = "http://127.0.0.1/images/"
 
 // HostSSH SSH配置
-const HostSSH = "43.138.25.60"
-const UserSSH = "ftpuser"
-const PasswordSSH = "424193726"
+const HostSSH = "127.0.0.1"
+const UserSSH = "123"
+const PasswordSSH = "Lwj123456789a"
 const TypeSSH = "password"
 const PortSSH = 22
 const MaxMsgCount = 100
