@@ -3,8 +3,11 @@ package service
 import (
 	"TikTok/config"
 	"TikTok/dao"
+	"TikTok/middleware/gorse"
 	"TikTok/middleware/rabbitmq"
 	"TikTok/middleware/redis"
+	"context"
+	"github.com/zhenghaoz/gorse/client"
 	"log"
 	"sort"
 	"strconv"
@@ -77,6 +80,7 @@ func (c CommentServiceImpl) Send(comment dao.Comment) (CommentInfo, error) {
 
 	//1.评论信息存储：
 	commentRtn, err := dao.InsertComment(commentInfo)
+
 	if err != nil {
 		return CommentInfo{}, err
 	}
@@ -100,6 +104,17 @@ func (c CommentServiceImpl) Send(comment dao.Comment) (CommentInfo, error) {
 		insertRedisVideoCommentId(strconv.Itoa(int(comment.VideoId)), strconv.Itoa(int(commentRtn.Id)))
 		log.Println("send comment save in redis")
 	}()
+	ctx := context.TODO()
+	gorse.GorseInstance.InsertFeedback(ctx, []client.Feedback{{
+		FeedbackType: "comment",
+		UserId:       strconv.FormatInt(userData.Id, 10),
+		Timestamp:    time.Now().UTC().Format(time.RFC3339),
+		ItemId:       strconv.FormatInt(comment.VideoId, 10),
+	}})
+
+	if err != nil {
+		return CommentInfo{}, err
+	}
 	//返回结果
 	return commentData, nil
 }
@@ -290,7 +305,7 @@ func (c CommentServiceImpl) GetList(videoId int64, userId int64) ([]CommentInfo,
 	return commentInfoList, nil
 }
 
-//在redis中存储video_id对应的comment_id 、 comment_id对应的video_id
+// 在redis中存储video_id对应的comment_id 、 comment_id对应的video_id
 func insertRedisVideoCommentId(videoId string, commentId string) {
 	//在redis-RdbVCid中存储video_id对应的comment_id
 	_, err := redis.RdbVCid.SAdd(redis.Ctx, videoId, commentId).Result()
@@ -306,7 +321,7 @@ func insertRedisVideoCommentId(videoId string, commentId string) {
 	}
 }
 
-//此函数用于给一个评论赋值：评论信息+用户信息 填充
+// 此函数用于给一个评论赋值：评论信息+用户信息 填充
 func oneComment(comment *CommentInfo, com *dao.Comment, userId int64) {
 	var wg sync.WaitGroup
 	wg.Add(1)

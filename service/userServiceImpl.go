@@ -3,11 +3,14 @@ package service
 import (
 	"TikTok/config"
 	"TikTok/dao"
+	"TikTok/middleware/gorse"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/zhenghaoz/gorse/client"
 	"log"
 	"strconv"
 	"time"
@@ -54,6 +57,12 @@ func (usi *UserServiceImpl) GetTableUserById(id int64) dao.TableUser {
 
 // InsertTableUser 将tableUser插入表内
 func (usi *UserServiceImpl) InsertTableUser(tableUser *dao.TableUser) bool {
+
+	ctx := context.TODO()
+	//插入用户
+	gorse.GorseInstance.InsertUser(ctx, client.User{
+		UserId: strconv.FormatInt(tableUser.Id, 10),
+	})
 	flag := dao.InsertTableUser(tableUser)
 	if flag == false {
 		log.Println("插入失败")

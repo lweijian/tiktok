@@ -48,6 +48,7 @@ func Register(c *gin.Context) {
 		u := usi.GetTableUserByUsername(username)
 		token := service.GenerateToken(username)
 		log.Println("注册返回的id: ", u.Id)
+
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: Response{StatusCode: 0},
 			UserId:   u.Id,

@@ -3,8 +3,12 @@ package dao
 import (
 	"TikTok/config"
 	"TikTok/middleware/ftp"
+	"TikTok/middleware/gorse"
+	"context"
+	"github.com/zhenghaoz/gorse/client"
 	"io"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -14,7 +18,9 @@ type TableVideo struct {
 	PlayUrl     string `json:"play_url"`
 	CoverUrl    string `json:"cover_url"`
 	PublishTime time.Time
-	Title       string `json:"title"` //视频名，5.23添加
+	Title       string   `json:"title"` //视频名，5.23添加
+	Label       []string `json:"label"`
+	Categories  []string `json:"categories"`
 }
 
 // TableName
@@ -114,6 +120,15 @@ func Save(videoName string, imageName string, authorId int64, title string) erro
 	if result.Error != nil {
 		return result.Error
 	}
+	ctx := context.TODO()
+	//gorse插入视频
+	gorse.GorseInstance.InsertItem(ctx, client.Item{
+		ItemId:     strconv.FormatInt(video.Id, 10),
+		IsHidden:   false,
+		Labels:     video.Label,
+		Categories: video.Categories,
+		Timestamp:  time.Now().UTC().Format(time.RFC3339),
+	})
 	return nil
 }
 

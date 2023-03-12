@@ -4,6 +4,7 @@ import (
 	"TikTok/dao"
 	"TikTok/middleware/ffmpeg"
 	"TikTok/middleware/ftp"
+	"TikTok/middleware/gorse"
 	"TikTok/middleware/rabbitmq"
 	"TikTok/middleware/redis"
 	"TikTok/util"
@@ -18,6 +19,7 @@ func main() {
 	////gin
 	r := gin.Default()
 	initRouter(r)
+
 	////pprof
 	//pprof.Register(r)
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
@@ -44,4 +46,6 @@ func initDeps() {
 	rabbitmq.InitCommentRabbitMQ()
 	////初始化敏感词拦截器。
 	util.InitFilter()
+	//初始化gorse
+	gorse.InitGorse()
 }

@@ -3,9 +3,12 @@ package service
 import (
 	"TikTok/config"
 	"TikTok/dao"
+	"TikTok/middleware/gorse"
 	"TikTok/middleware/rabbitmq"
 	"TikTok/middleware/redis"
+	"context"
 	"errors"
+	"github.com/zhenghaoz/gorse/client"
 	"log"
 	"strconv"
 	"strings"
@@ -18,15 +21,23 @@ type LikeServiceImpl struct {
 	UserService
 }
 
-//IsFavourite 根据userId,videoId查询点赞状态 这边可以快一点,通过查询两个Redis DB;
-//step1：查询Redis LikeUserId(key:strUserId)是否已经加载过此信息，通过是否存在value:videoId 判断点赞状态;
-//step2:如LikeUserId没有对应信息，查询LikeVideoId(key：strVideoId)是否已经加载过此信息，通过是否存在value:userId 判断点赞状态;
-//step3:LikeUserId LikeVideoId中都没有对应key,维护LikeUserId对应key，并通过查询key：strUserId中是否存在value:videoId 判断点赞状态;
+// IsFavourite 根据userId,videoId查询点赞状态 这边可以快一点,通过查询两个Redis DB;
+// step1：查询Redis LikeUserId(key:strUserId)是否已经加载过此信息，通过是否存在value:videoId 判断点赞状态;
+// step2:如LikeUserId没有对应信息，查询LikeVideoId(key：strVideoId)是否已经加载过此信息，通过是否存在value:userId 判断点赞状态;
+// step3:LikeUserId LikeVideoId中都没有对应key,维护LikeUserId对应key，并通过查询key：strUserId中是否存在value:videoId 判断点赞状态;
 func (like *LikeServiceImpl) IsFavourite(videoId int64, userId int64) (bool, error) {
 	//将int64 userId转换为 string strUserId
 	strUserId := strconv.FormatInt(userId, 10)
 	//将int64 videoId转换为 string strVideoId
 	strVideoId := strconv.FormatInt(videoId, 10)
+	//接入gorse
+	ctx := context.TODO()
+	gorse.GorseInstance.InsertFeedback(ctx, []client.Feedback{{
+		FeedbackType: "comment",
+		UserId:       strUserId,
+		Timestamp:    time.Now().UTC().Format(time.RFC3339),
+		ItemId:       strVideoId,
+	}})
 	//step1:查询Redis LikeUserId,key：strUserId中是否存在value:videoId,key中存在value 返回true，不存在返回false
 	if n, err := redis.RdbLikeUserId.Exists(redis.Ctx, strUserId).Result(); n > 0 {
 		//如果有问题，说明查询redis失败,返回默认false,返回错误信息
@@ -96,9 +107,9 @@ func (like *LikeServiceImpl) IsFavourite(videoId int64, userId int64) (bool, err
 	}
 }
 
-//FavouriteCount 根据videoId获取对应点赞数量;
-//step1：查询Redis LikeVideoId(key:strVideoId)是否已经加载过此信息，通过set集合中userId个数，获取点赞数量;
-//step2：LikeVideoId中都没有对应key，维护LikeVideoId对应key，再通过set集合中userId个数，获取点赞数量;
+// FavouriteCount 根据videoId获取对应点赞数量;
+// step1：查询Redis LikeVideoId(key:strVideoId)是否已经加载过此信息，通过set集合中userId个数，获取点赞数量;
+// step2：LikeVideoId中都没有对应key，维护LikeVideoId对应key，再通过set集合中userId个数，获取点赞数量;
 func (like *LikeServiceImpl) FavouriteCount(videoId int64) (int64, error) {
 	//将int64 videoId转换为 string strVideoId
 	strVideoId := strconv.FormatInt(videoId, 10)
@@ -158,8 +169,8 @@ func (like *LikeServiceImpl) FavouriteCount(videoId int64) (int64, error) {
 }
 
 // FavouriteAction 根据userId，videoId,actionType对视频进行点赞或者取消赞操作;
-//step1: 维护Redis LikeUserId(key:strUserId),添加或者删除value:videoId,LikeVideoId(key:strVideoId),添加或者删除value:userId;
-//step2：更新数据库likes表;
+// step1: 维护Redis LikeUserId(key:strUserId),添加或者删除value:videoId,LikeVideoId(key:strVideoId),添加或者删除value:userId;
+// step2：更新数据库likes表;
 func (like *LikeServiceImpl) FavouriteAction(userId int64, videoId int64, actionType int32) error {
 	//将int64 videoId转换为 string strVideoId
 	strUserId := strconv.FormatInt(userId, 10)
@@ -392,9 +403,9 @@ func (like *LikeServiceImpl) FavouriteAction(userId int64, videoId int64, action
 	return nil
 }
 
-//GetFavouriteList 根据userId，curId(当前用户Id),返回userId的点赞列表;
-//step1：查询Redis LikeUserId(key:strUserId)是否已经加载过此信息，获取集合中全部videoId，并添加到点赞列表集合中;
-//step2：LikeUserId中都没有对应key，维护LikeUserId对应key，同时添加到点赞列表集合中;
+// GetFavouriteList 根据userId，curId(当前用户Id),返回userId的点赞列表;
+// step1：查询Redis LikeUserId(key:strUserId)是否已经加载过此信息，获取集合中全部videoId，并添加到点赞列表集合中;
+// step2：LikeUserId中都没有对应key，维护LikeUserId对应key，同时添加到点赞列表集合中;
 func (like *LikeServiceImpl) GetFavouriteList(userId int64, curId int64) ([]Video, error) {
 	//将int64 userId转换为 string strUserId
 	strUserId := strconv.FormatInt(userId, 10)
@@ -482,7 +493,7 @@ func (like *LikeServiceImpl) GetFavouriteList(userId int64, curId int64) ([]Vide
 	}
 }
 
-//addFavouriteVideoList 根据videoId,登录用户curId，添加视频对象到点赞列表空间
+// addFavouriteVideoList 根据videoId,登录用户curId，添加视频对象到点赞列表空间
 func (like *LikeServiceImpl) addFavouriteVideoList(videoId int64, curId int64, favoriteVideoList *[]Video, wg *sync.WaitGroup) {
 	defer wg.Done()
 	//调用videoService接口，GetVideo：根据videoId，当前用户id:curId，返回Video类型对象
@@ -496,7 +507,7 @@ func (like *LikeServiceImpl) addFavouriteVideoList(videoId int64, curId int64, f
 	*favoriteVideoList = append(*favoriteVideoList, video)
 }
 
-//TotalFavourite 根据userId获取这个用户总共被点赞数量
+// TotalFavourite 根据userId获取这个用户总共被点赞数量
 func (like *LikeServiceImpl) TotalFavourite(userId int64) (int64, error) {
 	//根据userId获取这个用户的发布视频列表信息
 	videoIdList, err := like.GetVideoIdList(userId)
@@ -522,7 +533,7 @@ func (like *LikeServiceImpl) TotalFavourite(userId int64) (int64, error) {
 	return sum, nil
 }
 
-//FavouriteVideoCount 根据userId获取这个用户点赞视频数量
+// FavouriteVideoCount 根据userId获取这个用户点赞视频数量
 func (like *LikeServiceImpl) FavouriteVideoCount(userId int64) (int64, error) {
 	//将int64 userId转换为 string strUserId
 	strUserId := strconv.FormatInt(userId, 10)
@@ -585,7 +596,7 @@ func (like *LikeServiceImpl) FavouriteVideoCount(userId int64) (int64, error) {
 	}
 }
 
-//addVideoLikeCount 根据videoId，将该视频点赞数加入对应提前开辟好的空间内
+// addVideoLikeCount 根据videoId，将该视频点赞数加入对应提前开辟好的空间内
 func (like *LikeServiceImpl) addVideoLikeCount(videoId int64, videoLikeCountList *[]int64, wg *sync.WaitGroup) {
 	defer wg.Done()
 	//调用FavouriteCount：根据videoId,获取点赞数
@@ -598,7 +609,7 @@ func (like *LikeServiceImpl) addVideoLikeCount(videoId int64, videoLikeCountList
 	*videoLikeCountList = append(*videoLikeCountList, count)
 }
 
-//GetLikeService 解决likeService调videoService,videoService调userService,useService调likeService循环依赖的问题
+// GetLikeService 解决likeService调videoService,videoService调userService,useService调likeService循环依赖的问题
 func GetLikeService() LikeServiceImpl {
 	var userService UserServiceImpl
 	var videoService VideoServiceImpl
